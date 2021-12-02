@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	error_messages "udp-chat/infra/logger/constants"
 	"udp-chat/infra/logger/model"
 )
 
@@ -56,14 +57,13 @@ func (l Logger) Info(msg string) {
 func (l Logger) getLogFile(path string) (f *os.File) {
 	filePath, err := filepath.Abs(path)
 	if err != nil {
-		log.Println("failed to retrieve log file:", err.Error())
 		return
 	}
 
 	if _, err = os.Stat(filePath); os.IsNotExist(err) {
 		err = os.Mkdir(filePath, 0755)
 		if err != nil {
-			log.Println("failed to create logs folder", err.Error())
+			log.Println(error_messages.FailedToCreateLogsFolder, err.Error())
 			return
 		}
 	}
@@ -73,7 +73,7 @@ func (l Logger) getLogFile(path string) (f *os.File) {
 
 	f, err = os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Println("failed to create log file:", err.Error())
+		log.Println(error_messages.FailedToCreateLogsFile, err.Error())
 		return nil
 	}
 
@@ -82,12 +82,7 @@ func (l Logger) getLogFile(path string) (f *os.File) {
 
 func (l Logger) writeError(errorLog model.Log) {
 	f := l.getLogFile(l.logFilePath)
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			log.Println("failed to close log file", err.Error())
-		}
-	}(f)
+	defer f.Close()
 
 	b, e := json.Marshal(errorLog)
 	if e != nil {
