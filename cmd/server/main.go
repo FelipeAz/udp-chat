@@ -23,7 +23,6 @@ func main() {
 	}
 
 	loggerService := logger.NewLogger("log")
-	loggerService.Warn("testing")
 	cli := server.NewServer(cache, loggerService)
 	cli.Listen(":8080")
 }
