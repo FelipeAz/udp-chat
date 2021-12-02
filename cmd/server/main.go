@@ -1,22 +1,29 @@
 package main
 
 import (
-	"context"
 	"log"
-	"sync"
+	"udp-chat/infra/logger"
+	"udp-chat/infra/redis"
 	"udp-chat/internal/app/chat/server"
 )
 
 func main() {
-	ctx := context.Background()
-	var wg sync.WaitGroup
-	wg.Add(1)
+	//cache, err := redis.NewCache(
+	//	os.Getenv("REDIS_HOST"),
+	//	os.Getenv("REDIS_PORT"),
+	//	os.Getenv("REDIS_EXPIRE"),
+	//)
+	cache, err := redis.NewCache(
+		"localhost",
+		"6380",
+		"1200",
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	go func() {
-		err := server.ChatServer(ctx, ":8080")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-	wg.Wait()
+	loggerService := logger.NewLogger("log")
+	loggerService.Warn("testing")
+	cli := server.NewServer(cache, loggerService)
+	cli.Listen(":8080")
 }
