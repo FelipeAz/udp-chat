@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-const maxBufferSize = 1024
 const timeout = 5
 
 func ChatClient(ctx context.Context, address string, reader io.Reader) (err error) {
