@@ -24,7 +24,8 @@ func main() {
 	}
 	loggerService := logger.NewLogger("log")
 
-	message := messages.NewMessage(cache, loggerService)
+	// os.Getenv("QUEUE_CACHE_LENGTH")
+	message := messages.NewMessage(cache, loggerService, 20)
 	cli := server.NewServer(message, loggerService)
 	cli.Listen(":8080")
 }

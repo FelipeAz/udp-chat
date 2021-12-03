@@ -65,7 +65,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 
 			// Storing message to cache
 			msg := bytes.NewBuffer(bytes.Trim(buffer, "\x00")).String()
-			id, err := s.Message.StoreMessage(msg)
+			id, err := s.Message.Store(msg)
 			if err != nil {
 				s.Logger.Error(err)
 				return

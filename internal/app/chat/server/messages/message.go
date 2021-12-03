@@ -14,17 +14,19 @@ import (
 type Message struct {
 	Cache  database.CacheInterface
 	Logger logger.LogInterface
+	Size   int
 }
 
-func NewMessage(cache database.CacheInterface, log logger.LogInterface) Message {
+func NewMessage(cache database.CacheInterface, log logger.LogInterface, maxSize int) Message {
 	return Message{
 		Cache:  cache,
 		Logger: log,
+		Size:   maxSize,
 	}
 }
 
-func (m Message) StoreMessage(msg string) (string, error) {
-	messages, err := m.GetMessages()
+func (m Message) Store(msg string) (string, error) {
+	messages, err := m.Get()
 	if err != nil {
 		err = errors.Wrap(err, error_messages.FailedToGetMessagesFromChat)
 		m.Logger.Error(err)
@@ -35,7 +37,7 @@ func (m Message) StoreMessage(msg string) (string, error) {
 		Date: time.Now(),
 	}
 
-	messages = append(messages, msgObj)
+	messages = m.addMessageToQueue(messages, msgObj)
 
 	b, err := json.Marshal(messages)
 	if err != nil {
@@ -52,7 +54,7 @@ func (m Message) StoreMessage(msg string) (string, error) {
 	return msgObj.Id, nil
 }
 
-func (m Message) GetMessages() ([]entity.Message, error) {
+func (m Message) Get() ([]entity.Message, error) {
 	var messages []entity.Message
 	b, err := m.Cache.Get("CHAT")
 	if err != nil {
@@ -69,6 +71,17 @@ func (m Message) GetMessages() ([]entity.Message, error) {
 	return messages, nil
 }
 
-func (m Message) DeleteMessage(id string) error {
+func (m Message) addMessageToQueue(queue []entity.Message, msg entity.Message) []entity.Message {
+	var newQueue []entity.Message
+	if len(queue) < m.Size {
+		newQueue = append(queue, msg)
+		return newQueue
+	}
+
+	newQueue = append(queue[1:], msg)
+	return newQueue
+}
+
+func (m Message) Delete(id string) error {
 	return nil
 }
