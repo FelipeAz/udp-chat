@@ -1,11 +1,14 @@
 package client
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -30,23 +33,17 @@ func (c Client) Listen(port string) {
 	wg.Add(1)
 
 	ctx := context.Background()
-	go func() {
-		for {
-			var msg string
-			_, err := fmt.Scan(&msg)
-			if err != nil {
-				c.Logger.Error(err)
-				log.Fatal(err)
-			}
-			err = c.ConnectClient(ctx, port, strings.NewReader(msg))
+	for {
+		scanner := bufio.NewScanner(os.Stdin)
+		if scanner.Scan() {
+			line := scanner.Text()
+			err := c.ConnectClient(ctx, port, strings.NewReader(line))
 			if err != nil {
 				c.Logger.Error(err)
 				log.Fatal(err)
 			}
 		}
-	}()
-
-	wg.Wait()
+	}
 }
 
 func (c Client) ConnectClient(ctx context.Context, address string, reader io.Reader) (err error) {
@@ -61,31 +58,40 @@ func (c Client) ConnectClient(ctx context.Context, address string, reader io.Rea
 		c.Logger.Error(err)
 		log.Fatal(err)
 	}
-	defer conn.Close()
+	defer closeConn(conn)
 
+	serverResp := make([]byte, 512)
 	doneChan := make(chan error, 1)
 	go func() {
-		_, err := io.Copy(conn, reader)
-		if err != nil {
-			c.Logger.Warn(error_messages.FailedToCopyFromReader)
-			doneChan <- err
-			return
-		}
+		for {
+			// copy the client input to the server connection
+			_, err := io.Copy(conn, reader)
+			if err != nil {
+				c.Logger.Warn(error_messages.FailedToCopyFromReader)
+				doneChan <- err
+				return
+			}
 
-		deadline := time.Now().Add(timeout * time.Second)
-		err = conn.SetReadDeadline(deadline)
-		if err != nil {
-			c.Logger.Warn(error_messages.FailedToSetReaderDeadline)
-			doneChan <- err
-			return
-		}
+			// set a connection deadline
+			deadline := time.Now().Add(timeout * time.Second)
+			err = conn.SetReadDeadline(deadline)
+			if err != nil {
+				c.Logger.Warn(error_messages.FailedToSetReaderDeadline)
+				doneChan <- err
+				return
+			}
 
-		if err != nil {
-			doneChan <- err
-			return
-		}
+			// Read Response from server
+			_, err = conn.Read(serverResp)
+			if err != nil {
+				c.Logger.Error(err)
+				doneChan <- err
+			}
+			resp := bytes.NewBuffer(bytes.Trim(serverResp, "\x00")).String()
+			fmt.Println(resp)
 
-		doneChan <- nil
+			doneChan <- nil
+		}
 	}()
 
 	select {
@@ -95,4 +101,11 @@ func (c Client) ConnectClient(ctx context.Context, address string, reader io.Rea
 	}
 
 	return
+}
+
+func closeConn(c io.Closer) {
+	err := c.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
