@@ -8,23 +8,23 @@ import (
 	"net"
 	"sync"
 	"time"
-	database "udp-chat/internal/app/cache"
 	error_messages "udp-chat/internal/app/chat/server/constants"
-	"udp-chat/internal/app/logger"
+	"udp-chat/internal/app/chat/server/messages"
+	"udp-chat/internal/logger"
 )
 
 const maxBufferSize = 1024
 const timeout = 5
 
 type Server struct {
-	Cache  database.CacheInterface
-	Logger logger.LogInterface
+	Message messages.MessageInterface
+	Logger  logger.LogInterface
 }
 
-func NewServer(cache database.CacheInterface, log logger.LogInterface) Server {
+func NewServer(message messages.MessageInterface, log logger.LogInterface) Server {
 	return Server{
-		Cache:  cache,
-		Logger: log,
+		Message: message,
+		Logger:  log,
 	}
 }
 
@@ -52,11 +52,10 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 	defer conn.Close()
 
 	doneChan := make(chan error, 1)
-	buffer := make([]byte, maxBufferSize)
 
 	go func() {
 		for {
-			buffer = make([]byte, maxBufferSize)
+			buffer := make([]byte, maxBufferSize)
 			n, addr, err := conn.ReadFrom(buffer)
 			if err != nil {
 				s.Logger.Warn(error_messages.FailedToReadFromBuffer)
@@ -64,8 +63,14 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 				return
 			}
 
-			msg := bytes.NewBuffer(buffer)
-			fmt.Printf("%s: %s\n", addr.String(), msg.String())
+			msg := bytes.NewBuffer(bytes.Trim(buffer, "\x00")).String()
+			id, err := s.Message.StoreMessage(msg)
+			if err != nil {
+				s.Logger.Error(err)
+				return
+			}
+
+			fmt.Printf("%s: %s\n", id, msg)
 
 			deadline := time.Now().Add(timeout * time.Second)
 			err = conn.SetWriteDeadline(deadline)

@@ -5,6 +5,7 @@ import (
 	"udp-chat/infra/logger"
 	"udp-chat/infra/redis"
 	"udp-chat/internal/app/chat/server"
+	"udp-chat/internal/app/chat/server/messages"
 )
 
 func main() {
@@ -21,8 +22,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	loggerService := logger.NewLogger("log")
-	cli := server.NewServer(cache, loggerService)
+
+	message := messages.NewMessage(cache, loggerService)
+	cli := server.NewServer(message, loggerService)
 	cli.Listen(":8080")
 }
