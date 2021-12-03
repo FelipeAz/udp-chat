@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 	error_messages "udp-chat/internal/app/chat/client/constants"
-	"udp-chat/internal/app/logger"
+	"udp-chat/internal/logger"
 )
 
 const timeout = 5
