@@ -14,13 +14,13 @@ const (
 
 func main() {
 	var username string
-	loggerService := logger.NewLogger("log/client", ServiceName)
 	fmt.Printf("Enter your Name: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	if scanner.Scan() {
 		username = scanner.Text()
 	}
 
+	loggerService := logger.NewLogger("log/client", ServiceName)
 	cli := client.NewClient(username, loggerService)
 	cli.Listen(":8000")
 }
