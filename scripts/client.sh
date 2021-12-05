@@ -1,0 +1,1 @@
+clear && go run cmd/client/main.go
