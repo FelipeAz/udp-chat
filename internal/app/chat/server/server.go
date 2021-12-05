@@ -59,7 +59,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 			// Receiving message from server
 			// buffer contains the message received from client
 			buffer := make([]byte, maxBufferSize)
-			_, addr, err := conn.ReadFromUDP(buffer)
+			_, clientAddr, err := conn.ReadFromUDP(buffer)
 			if err != nil {
 				s.Logger.Warn(error_messages.FailedToReadFromBuffer)
 				doneChan <- err
@@ -90,7 +90,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 
 			// Writing message to client
 			reply := []byte(response)
-			_, err = conn.WriteToUDP(reply, addr)
+			_, err = conn.WriteToUDP(reply, clientAddr)
 			if err != nil {
 				s.Logger.Error(err)
 				return
