@@ -11,7 +11,7 @@ type MockCache struct {
 
 // Set inserts a value into the MockCache
 func (c *MockCache) Set(key string, value []byte) error {
-	resp := c.Called(key, value)
+	resp := c.Called(key)
 	return resp.Error(0)
 }
 
