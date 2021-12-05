@@ -30,6 +30,7 @@ func NewServer(message messages.MessageInterface, log logger.LogInterface) Serve
 }
 
 func (s Server) Listen(port string) {
+	fmt.Println("CHAT IS READY FOR CONNECTION")
 	ctx := context.Background()
 
 	err := s.ConnectServer(ctx, port)
@@ -75,8 +76,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 
 			// Return message
 			msgTime := msgObj.Date.Format("01-02-2006 03:04")
-			response := fmt.Sprintf("%s %s: %s\n", msgTime, msgObj.Username, msgObj.Text)
-
+			response := fmt.Sprintf("%s %s: %s", msgTime, msgObj.Username, msgObj.Text)
 			fmt.Println(response)
 
 			// Response deadline

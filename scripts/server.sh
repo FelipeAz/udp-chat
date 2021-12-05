@@ -1,1 +1,1 @@
-cp .env_example .env && docker-compose up --build -d && clear && go run cmd/server/main.go
+cp .env_example .env && docker-compose up --build

@@ -14,6 +14,7 @@ const (
 
 func main() {
 	var username string
+
 	fmt.Printf("Enter your Name: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	if scanner.Scan() {
@@ -21,6 +22,7 @@ func main() {
 	}
 
 	loggerService := logger.NewLogger("log/client", ServiceName)
+
 	cli := client.NewClient(username, loggerService)
-	cli.Listen(":8000")
+	cli.Listen("0.0.0.0:8000")
 }

@@ -39,6 +39,7 @@ func NewClient(username string, log logger.LogInterface) Client {
 func (c Client) Listen(port string) {
 	ctx := context.Background()
 	for {
+		fmt.Printf("Type a message: ")
 		scanner := bufio.NewScanner(os.Stdin)
 		if scanner.Scan() {
 			msg := entity.Message{
@@ -83,7 +84,7 @@ func (c Client) ConnectClient(ctx context.Context, address string, reader io.Rea
 	doneChan := make(chan error, 1)
 	go func() {
 		for {
-			// copy the client input to the server connection
+			// Send the client input to the server
 			_, err := io.Copy(conn, reader)
 			if err != nil {
 				c.Logger.Warn(error_messages.FailedToCopyFromReader)
@@ -105,6 +106,7 @@ func (c Client) ConnectClient(ctx context.Context, address string, reader io.Rea
 			if err != nil {
 				c.Logger.Error(err)
 				doneChan <- err
+				return
 			}
 			resp := bytes.NewBuffer(bytes.Trim(serverResp, "\x00")).String()
 			fmt.Println(resp)
