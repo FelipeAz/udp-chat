@@ -2,7 +2,6 @@ package messages
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"time"
 	"udp-chat/internal/app/chat/entity"
@@ -25,33 +24,36 @@ func NewMessage(cache database.CacheInterface, log logger.LogInterface, maxSize 
 	}
 }
 
-func (m Message) Store(msg string) (string, error) {
+func (m Message) Store(msg string) (*entity.Message, error) {
+	var msgObj entity.Message
 	messages, err := m.Get()
 	if err != nil {
 		err = errors.Wrap(err, error_messages.FailedToGetMessagesFromChat)
 		m.Logger.Error(err)
 	}
-	msgObj := entity.Message{
-		Id:   uuid.NewString(),
-		Text: msg,
-		Date: time.Now(),
+
+	bmsg := []byte(msg)
+	err = json.Unmarshal(bmsg, &msgObj)
+	if err != nil {
+		return nil, err
 	}
+	msgObj.Date = time.Now()
 
 	messages = m.addMessageToQueue(messages, msgObj)
 
 	b, err := json.Marshal(messages)
 	if err != nil {
 		m.Logger.Error(err)
-		return "", err
+		return nil, err
 	}
 
 	err = m.Cache.Set("CHAT", b)
 	if err != nil {
 		m.Logger.Error(err)
-		return "", err
+		return nil, err
 	}
 
-	return msgObj.Id, nil
+	return &msgObj, nil
 }
 
 func (m Message) Get() ([]entity.Message, error) {

@@ -65,12 +65,17 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 
 			// Storing message to cache
 			msg := bytes.NewBuffer(bytes.Trim(buffer, "\x00")).String()
-			id, err := s.Message.Store(msg)
+			msgObj, err := s.Message.Store(msg)
 			if err != nil {
 				s.Logger.Error(err)
 				return
 			}
-			fmt.Printf("%s: %s\n", id, msg)
+
+			// Return message
+			msgTime := msgObj.Date.Format("01-02-2006 03:04")
+			response := fmt.Sprintf("%s %s: %s\n", msgTime, msgObj.Username, msgObj.Text)
+
+			fmt.Println(response)
 
 			// Response deadline
 			deadline := time.Now().Add(timeout * time.Second)
@@ -82,7 +87,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 			}
 
 			// Writing message to client
-			reply := []byte(fmt.Sprintf("%s said: %s", addr, msg))
+			reply := []byte(response)
 			_, err = conn.WriteToUDP(reply, addr)
 			if err != nil {
 				s.Logger.Error(err)

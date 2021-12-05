@@ -9,6 +9,11 @@ import (
 )
 
 func main() {
+	//maxSize, err := strconv.Atoi(os.Getenv("QUEUE_CACHE_LENGTH"))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+
 	//cache, err := redis.NewCache(
 	//	os.Getenv("REDIS_HOST"),
 	//	os.Getenv("REDIS_PORT"),
@@ -22,10 +27,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	loggerService := logger.NewLogger("log")
 
-	// os.Getenv("QUEUE_CACHE_LENGTH")
+	loggerService := logger.NewLogger("log")
 	message := messages.NewMessage(cache, loggerService, 20)
+
 	cli := server.NewServer(message, loggerService)
-	cli.Listen(":8080")
+	cli.Listen(":8000")
 }

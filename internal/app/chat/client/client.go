@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net"
@@ -12,18 +14,23 @@ import (
 	"strings"
 	"time"
 	error_messages "udp-chat/internal/app/chat/client/constants"
+	"udp-chat/internal/app/chat/entity"
 	"udp-chat/internal/logger"
 )
 
 const timeout = 5
 
 type Client struct {
-	Logger logger.LogInterface
+	Username string
+	UserId   string
+	Logger   logger.LogInterface
 }
 
-func NewClient(log logger.LogInterface) Client {
+func NewClient(username string, log logger.LogInterface) Client {
 	return Client{
-		Logger: log,
+		Username: username,
+		UserId:   uuid.NewString(),
+		Logger:   log,
 	}
 }
 
@@ -32,8 +39,22 @@ func (c Client) Listen(port string) {
 	for {
 		scanner := bufio.NewScanner(os.Stdin)
 		if scanner.Scan() {
-			line := scanner.Text()
-			err := c.ConnectClient(ctx, port, strings.NewReader(line))
+			msg := entity.Message{
+				Id:       uuid.NewString(),
+				UserId:   c.UserId,
+				Username: c.Username,
+				Text:     scanner.Text(),
+				Date:     time.Time{},
+			}
+
+			bmsg, err := json.Marshal(msg)
+			if err != nil {
+				c.Logger.Error(err)
+				return
+			}
+
+			smsg := string(bmsg)
+			err = c.ConnectClient(ctx, port, strings.NewReader(smsg))
 			if err != nil {
 				c.Logger.Error(err)
 				log.Fatal(err)
