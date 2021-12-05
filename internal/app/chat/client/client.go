@@ -10,7 +10,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"sync"
 	"time"
 	error_messages "udp-chat/internal/app/chat/client/constants"
 	"udp-chat/internal/logger"
@@ -29,9 +28,6 @@ func NewClient(log logger.LogInterface) Client {
 }
 
 func (c Client) Listen(port string) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
 	ctx := context.Background()
 	for {
 		scanner := bufio.NewScanner(os.Stdin)
