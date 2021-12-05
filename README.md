@@ -8,7 +8,7 @@ UDP-CHAT is a chat made in Golang which simulates a real-time chat using a UDP s
 
 ## PROJECT REQUIREMENTS
 
-This project requires only ``DOCKER`` installed in your machine.
+This project requires ``DOCKER`` and ``GOLANG`` installed in your machine.
 
 ## Ports Availability
 ``6380`` - REDIS
