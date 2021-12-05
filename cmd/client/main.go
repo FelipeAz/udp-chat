@@ -8,11 +8,14 @@ import (
 	"udp-chat/internal/app/chat/client"
 )
 
+const (
+	ServiceName = "Client"
+)
+
 func main() {
 	var username string
-	loggerService := logger.NewLogger("log")
-
-	fmt.Printf("Name: ")
+	loggerService := logger.NewLogger("log/client", ServiceName)
+	fmt.Printf("Enter your Name: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	if scanner.Scan() {
 		username = scanner.Text()

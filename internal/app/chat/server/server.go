@@ -12,8 +12,10 @@ import (
 	"udp-chat/internal/logger"
 )
 
-const maxBufferSize = 1024
-const timeout = 5
+const (
+	maxBufferSize = 1024
+	timeout       = 5
+)
 
 type Server struct {
 	Message messages.MessageInterface

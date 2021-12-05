@@ -8,6 +8,10 @@ import (
 	"udp-chat/internal/app/chat/server/messages"
 )
 
+const (
+	ServiceName = "Server"
+)
+
 func main() {
 	//maxSize, err := strconv.Atoi(os.Getenv("QUEUE_CACHE_LENGTH"))
 	//if err != nil {
@@ -28,9 +32,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	loggerService := logger.NewLogger("log")
+	loggerService := logger.NewLogger("log/server", ServiceName)
 	message := messages.NewMessage(cache, loggerService, 20)
-
 	cli := server.NewServer(message, loggerService)
 	cli.Listen(":8000")
 }

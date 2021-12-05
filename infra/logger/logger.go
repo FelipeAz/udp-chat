@@ -19,19 +19,22 @@ const (
 
 type Logger struct {
 	logFilePath string
+	serviceName string
 }
 
-func NewLogger(logFilePath string) Logger {
+func NewLogger(logFilePath, service string) Logger {
 	return Logger{
 		logFilePath: logFilePath,
+		serviceName: service,
 	}
 }
 
 func (l Logger) Error(err error) {
 	errorLog := model.Log{
-		Level: ErrorLevel,
-		Error: err.Error(),
-		Time:  time.Now(),
+		Level:   ErrorLevel,
+		Service: l.serviceName,
+		Error:   err.Error(),
+		Time:    time.Now(),
 	}
 	l.writeError(errorLog)
 }
@@ -39,6 +42,7 @@ func (l Logger) Error(err error) {
 func (l Logger) Warn(msg string) {
 	errorLog := model.Log{
 		Level:   WarnLevel,
+		Service: l.serviceName,
 		Message: msg,
 		Time:    time.Now(),
 	}
@@ -48,6 +52,7 @@ func (l Logger) Warn(msg string) {
 func (l Logger) Info(msg string) {
 	errorLog := model.Log{
 		Level:   InfoLevel,
+		Service: l.serviceName,
 		Message: msg,
 		Time:    time.Now(),
 	}
@@ -61,7 +66,7 @@ func (l Logger) getLogFile(path string) (f *os.File) {
 	}
 
 	if _, err = os.Stat(filePath); os.IsNotExist(err) {
-		err = os.Mkdir(filePath, 0755)
+		err = os.MkdirAll(filePath, 0755)
 		if err != nil {
 			log.Println(error_messages.FailedToCreateLogsFolder, err.Error())
 			return

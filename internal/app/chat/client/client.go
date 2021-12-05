@@ -18,7 +18,9 @@ import (
 	"udp-chat/internal/logger"
 )
 
-const timeout = 5
+const (
+	timeout = 5
+)
 
 type Client struct {
 	Username string
