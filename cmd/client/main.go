@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/google/uuid"
 	"os"
 	"udp-chat/infra/logger"
 	"udp-chat/internal/app/chat/client"
@@ -20,9 +21,10 @@ func main() {
 	if scanner.Scan() {
 		username = scanner.Text()
 	}
+	userId := uuid.NewString()
 
 	loggerService := logger.NewLogger("log/client", ServiceName)
 
-	cli := client.NewClient(username, loggerService)
+	cli := client.NewClient(username, userId, loggerService)
 	cli.Listen("0.0.0.0:8000")
 }

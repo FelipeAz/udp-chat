@@ -7,12 +7,13 @@ import (
 	"log"
 	"net"
 	"time"
+	"udp-chat/internal/app/chat/messages"
 	error_messages "udp-chat/internal/app/chat/server/constants"
-	"udp-chat/internal/app/chat/server/messages"
 	"udp-chat/internal/logger"
 )
 
 const (
+	dateFormat    = "01-02-2006 03:04"
 	maxBufferSize = 1024
 	timeout       = 5
 )
@@ -75,8 +76,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 			}
 
 			// Return message
-			msgTime := msgObj.Date.Format("01-02-2006 03:04")
-			response := fmt.Sprintf("%s %s: %s", msgTime, msgObj.Username, msgObj.Text)
+			response := fmt.Sprintf("%s %s: %s", msgObj.GetDateFormated(dateFormat), msgObj.Username, msgObj.Text)
 			fmt.Println(response)
 
 			// Response deadline

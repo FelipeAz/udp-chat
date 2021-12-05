@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"udp-chat/infra/logger"
 	"udp-chat/infra/redis"
+	"udp-chat/internal/app/chat/messages"
 	"udp-chat/internal/app/chat/server"
-	"udp-chat/internal/app/chat/server/messages"
 )
 
 const (

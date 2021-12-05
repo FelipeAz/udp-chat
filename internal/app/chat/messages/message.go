@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"time"
-	"udp-chat/internal/app/chat/entity"
+	"udp-chat/internal/app/chat/messages/model"
 	error_messages "udp-chat/internal/app/chat/server/constants"
 	database "udp-chat/internal/cache"
 	"udp-chat/internal/logger"
@@ -24,8 +24,8 @@ func NewMessage(cache database.CacheInterface, log logger.LogInterface, maxSize 
 	}
 }
 
-func (m Message) Store(msg string) (*entity.Message, error) {
-	var msgObj entity.Message
+func (m Message) Store(msg string) (*model.Message, error) {
+	var msgObj model.Message
 	messages, err := m.Get()
 	if err != nil {
 		err = errors.Wrap(err, error_messages.FailedToGetMessagesFromChat)
@@ -56,8 +56,8 @@ func (m Message) Store(msg string) (*entity.Message, error) {
 	return &msgObj, nil
 }
 
-func (m Message) Get() ([]entity.Message, error) {
-	var messages []entity.Message
+func (m Message) Get() ([]model.Message, error) {
+	var messages []model.Message
 	b, err := m.Cache.Get("CHAT")
 	if err != nil {
 		m.Logger.Error(err)
@@ -73,8 +73,8 @@ func (m Message) Get() ([]entity.Message, error) {
 	return messages, nil
 }
 
-func (m Message) addMessageToQueue(queue []entity.Message, msg entity.Message) []entity.Message {
-	var newQueue []entity.Message
+func (m Message) addMessageToQueue(queue []model.Message, msg model.Message) []model.Message {
+	var newQueue []model.Message
 	if len(queue) < m.Size {
 		newQueue = append(queue, msg)
 		return newQueue

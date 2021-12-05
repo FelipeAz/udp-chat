@@ -3,9 +3,7 @@ package client
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"log"
 	"net"
@@ -13,7 +11,7 @@ import (
 	"strings"
 	"time"
 	error_messages "udp-chat/internal/app/chat/client/constants"
-	"udp-chat/internal/app/chat/entity"
+	"udp-chat/internal/app/chat/messages/model"
 	"udp-chat/internal/logger"
 )
 
@@ -27,10 +25,10 @@ type Client struct {
 	Logger   logger.LogInterface
 }
 
-func NewClient(username string, log logger.LogInterface) Client {
+func NewClient(username, userId string, log logger.LogInterface) Client {
 	return Client{
 		Username: username,
-		UserId:   uuid.NewString(),
+		UserId:   userId,
 		Logger:   log,
 	}
 }
@@ -58,21 +56,17 @@ func (c Client) ConnectClient(ctx context.Context, address string) (err error) {
 	}
 	defer closeConn(conn)
 
+	msgId := 1
 	serverResp := make([]byte, 512)
 	doneChan := make(chan error, 1)
 	go func() {
 		for {
+			// scanner.Scan locks process until the user types a message
 			fmt.Printf("Type a message: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			if scanner.Scan() {
-				msg := entity.Message{
-					Id:       uuid.NewString(),
-					UserId:   c.UserId,
-					Username: c.Username,
-					Text:     scanner.Text(),
-					Date:     time.Time{},
-				}
-				bmsg, err := json.Marshal(msg)
+				msg := model.NewMessage(msgId, c.Username, c.UserId, scanner.Text())
+				bmsg, err := msg.ToBytes()
 				if err != nil {
 					c.Logger.Error(err)
 					return
@@ -102,6 +96,7 @@ func (c Client) ConnectClient(ctx context.Context, address string) (err error) {
 					doneChan <- err
 					return
 				}
+				msgId++
 				//resp := bytes.NewBuffer(bytes.Trim(serverResp, "\x00")).String()
 				//fmt.Println(resp)
 			}
