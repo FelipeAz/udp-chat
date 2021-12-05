@@ -33,33 +33,27 @@ func (s Server) Listen(port string) {
 	fmt.Println("CHAT IS READY FOR CONNECTION")
 	ctx := context.Background()
 
-	err := s.ConnectServer(ctx, port)
+	conn, err := net.ListenPacket("udp", port)
+	if err != nil {
+		s.Logger.Error(err)
+		log.Fatal(err)
+	}
+
+	err = s.serve(ctx, conn)
 	if err != nil {
 		s.Logger.Error(err)
 		log.Fatal(err)
 	}
 }
 
-func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
-	addr, err := net.ResolveUDPAddr("udp", address)
-	if err != nil {
-		s.Logger.Error(err)
-		log.Fatal(err)
-	}
-
-	conn, err := net.ListenUDP("udp", addr)
-	if err != nil {
-		s.Logger.Error(err)
-		log.Fatal(err)
-	}
-
+func (s Server) serve(ctx context.Context, conn net.PacketConn) (err error) {
 	doneChan := make(chan error, 1)
 	go func() {
 		for {
 			// Receiving message from server
 			// buffer contains the message received from client
 			buffer := make([]byte, maxBufferSize)
-			_, clientAddr, err := conn.ReadFromUDP(buffer)
+			_, clientAddr, err := conn.ReadFrom(buffer)
 			if err != nil {
 				s.Logger.Warn(error_messages.FailedToReadFromBuffer)
 				doneChan <- err
@@ -89,7 +83,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 
 			// Writing message to client
 			reply := []byte(response)
-			_, err = conn.WriteToUDP(reply, clientAddr)
+			_, err = conn.WriteTo(reply, clientAddr)
 			if err != nil {
 				s.Logger.Error(err)
 				return

@@ -34,16 +34,7 @@ func NewClient(username, userId string, log logger.LogInterface) Client {
 }
 
 func (c Client) Listen(port string) {
-	ctx := context.Background()
-	err := c.ConnectClient(ctx, port)
-	if err != nil {
-		c.Logger.Error(err)
-		log.Fatal(err)
-	}
-}
-
-func (c Client) ConnectClient(ctx context.Context, address string) (err error) {
-	udpAddr, err := net.ResolveUDPAddr("udp", address)
+	udpAddr, err := net.ResolveUDPAddr("udp", port)
 	if err != nil {
 		c.Logger.Error(err)
 		log.Fatal(err)
@@ -56,6 +47,15 @@ func (c Client) ConnectClient(ctx context.Context, address string) (err error) {
 	}
 	defer closeConn(conn)
 
+	ctx := context.Background()
+	err = c.serve(ctx, conn)
+	if err != nil {
+		c.Logger.Error(err)
+		log.Fatal(err)
+	}
+}
+
+func (c Client) serve(ctx context.Context, conn *net.UDPConn) (err error) {
 	msgId := 1
 	serverResp := make([]byte, 512)
 	doneChan := make(chan error, 1)
