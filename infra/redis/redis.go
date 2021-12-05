@@ -7,10 +7,6 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-const (
-	ClosingConnectionErrorMessage = "Failed to close redis connection %s"
-)
-
 // Cache implements Redis functions
 type Cache struct {
 	Host   string

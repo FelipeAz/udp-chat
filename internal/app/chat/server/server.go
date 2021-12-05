@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	dateFormat    = "01-02-2006 03:04"
 	maxBufferSize = 1024
 	timeout       = 5
 )
@@ -76,7 +75,7 @@ func (s Server) ConnectServer(ctx context.Context, address string) (err error) {
 			}
 
 			// Return message
-			response := fmt.Sprintf("%s %s: %s", msgObj.GetDateFormated(dateFormat), msgObj.Username, msgObj.Text)
+			response := msgObj.GetMessageFormated()
 			fmt.Println(response)
 
 			// Response deadline

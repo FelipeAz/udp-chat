@@ -10,6 +10,10 @@ import (
 	"udp-chat/internal/logger"
 )
 
+const (
+	CacheObjName = "CHAT"
+)
+
 type Message struct {
 	Cache  database.CacheInterface
 	Logger logger.LogInterface
@@ -47,7 +51,7 @@ func (m Message) Store(msg string) (*model.Message, error) {
 		return nil, err
 	}
 
-	err = m.Cache.Set("CHAT", b)
+	err = m.Cache.Set(CacheObjName, b)
 	if err != nil {
 		m.Logger.Error(err)
 		return nil, err
@@ -58,7 +62,7 @@ func (m Message) Store(msg string) (*model.Message, error) {
 
 func (m Message) Get() ([]model.Message, error) {
 	var messages []model.Message
-	b, err := m.Cache.Get("CHAT")
+	b, err := m.Cache.Get(CacheObjName)
 	if err != nil {
 		m.Logger.Error(err)
 		return nil, err
@@ -84,6 +88,6 @@ func (m Message) addMessageToQueue(queue []model.Message, msg model.Message) []m
 	return newQueue
 }
 
-func (m Message) Delete(id string) error {
+func (m Message) Delete(id, userId string) error {
 	return nil
 }
