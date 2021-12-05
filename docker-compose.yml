@@ -1,8 +1,32 @@
 version: '3.7'
 
 services:
+  server:
+    build:
+      context: "./"
+      dockerfile: "build/docker/Dockerfile"
+    container_name: udp-server
+    env_file:
+      - .env
+    links:
+      - redis
+    depends_on:
+      - "redis"
+    restart: unless-stopped
+    working_dir: "/go/src/udp-chat/cmd/server/"
+    command: bash -c "CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main . && ./main"
+    networks:
+      - chat-net
+    ports:
+      - "8000:8000/udp"
   redis:
     image: redis:alpine
     container_name: redis
+    networks:
+      - chat-net
     ports:
       - "6380:6379"
+networks:
+  chat-net:
+    name: chat-net
+    driver: bridge
