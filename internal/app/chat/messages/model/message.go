@@ -11,24 +11,29 @@ const (
 )
 
 type Message struct {
-	Id       int
-	UserId   string
-	Username string
-	Text     string
-	Date     time.Time
+	Id        int
+	UserId    string
+	Username  string
+	Text      string
+	NewClient bool
+	Date      time.Time
 }
 
 func NewMessage(id int, username, userId, text string) Message {
 	return Message{
-		Id:       id,
-		UserId:   userId,
-		Username: username,
-		Text:     text,
-		Date:     time.Now().UTC(),
+		Id:        id,
+		UserId:    userId,
+		Username:  username,
+		Text:      text,
+		NewClient: false,
+		Date:      time.Now().UTC(),
 	}
 }
 
 func (m Message) GetMessageFormated() string {
+	if m.NewClient {
+		return fmt.Sprintf("%s Joined the chat", m.Username)
+	}
 	date := m.GetDateFormated()
 	return fmt.Sprintf("%s %s: %s", date, m.Username, m.Text)
 }
@@ -38,10 +43,5 @@ func (m Message) GetDateFormated() string {
 }
 
 func (m Message) ToBytes() ([]byte, error) {
-	b, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
+	return json.Marshal(m)
 }

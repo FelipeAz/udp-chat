@@ -17,9 +17,16 @@ const (
 	timeout       = 5
 )
 
+type Client struct {
+	Username string
+	UserId   string
+	Addr     net.Addr
+}
+
 type Server struct {
 	Message messages.MessageInterface
 	Logger  logger.LogInterface
+	Clients []*Client
 }
 
 func NewServer(message messages.MessageInterface, log logger.LogInterface) Server {
@@ -29,7 +36,7 @@ func NewServer(message messages.MessageInterface, log logger.LogInterface) Serve
 	}
 }
 
-func (s Server) Listen(port string) {
+func (s *Server) Listen(port string) {
 	fmt.Println("CHAT IS READY FOR CONNECTION")
 	ctx := context.Background()
 
@@ -46,7 +53,7 @@ func (s Server) Listen(port string) {
 	}
 }
 
-func (s Server) serve(ctx context.Context, conn net.PacketConn) (err error) {
+func (s *Server) serve(ctx context.Context, conn net.PacketConn) (err error) {
 	doneChan := make(chan error, 1)
 	go func() {
 		for {
@@ -61,8 +68,20 @@ func (s Server) serve(ctx context.Context, conn net.PacketConn) (err error) {
 			}
 
 			// Storing message to cache
-			msg := bytes.NewBuffer(bytes.Trim(buffer, "\x00")).String()
-			msgObj, err := s.Message.Store(msg)
+			bmsg := bytes.Trim(buffer, "\x00")
+			msgObj, err := s.Message.UnmarshalMessage(bmsg)
+			if err != nil {
+				s.Logger.Error(err)
+				log.Fatal(err)
+			}
+
+			// Create new User
+			if msgObj.NewClient {
+				s.addClient(msgObj.Username, msgObj.UserId, clientAddr)
+			}
+
+			// Store last message
+			err = s.Message.Store(&msgObj)
 			if err != nil {
 				s.Logger.Error(err)
 				return
@@ -83,11 +102,7 @@ func (s Server) serve(ctx context.Context, conn net.PacketConn) (err error) {
 
 			// Writing message to client
 			reply := []byte(response)
-			_, err = conn.WriteTo(reply, clientAddr)
-			if err != nil {
-				s.Logger.Error(err)
-				return
-			}
+			s.broadcast(conn, reply)
 		}
 	}()
 
@@ -98,4 +113,22 @@ func (s Server) serve(ctx context.Context, conn net.PacketConn) (err error) {
 	}
 
 	return
+}
+
+func (s *Server) addClient(username, userid string, address net.Addr) {
+	cli := Client{
+		Username: username,
+		UserId:   userid,
+		Addr:     address,
+	}
+	s.Clients = append(s.Clients, &cli)
+}
+
+func (s *Server) broadcast(conn net.PacketConn, bmsg []byte) {
+	for _, client := range s.Clients {
+		_, err := conn.WriteTo(bmsg, client.Addr)
+		if err != nil {
+			s.Logger.Error(err)
+		}
+	}
 }
