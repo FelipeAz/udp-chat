@@ -99,19 +99,14 @@ func (c *Client) registerClient(conn *net.UDPConn, doneChann chan<- error) {
 }
 
 func (c *Client) listenServer(conn *net.UDPConn) {
-	buffer := make([]byte, 2048)
+	buffer := make([]byte, 4096)
 	for {
 		// Read Response from server
-		_, err := conn.Read(buffer)
-		if err != nil {
-			c.Logger.Error(err)
-		}
-
-		b := bytes.Trim(buffer, "\x00")
-		if len(b) > 0 {
+		b, _ := conn.Read(buffer)
+		if b > 0 {
 			resp := bytes.NewBuffer(bytes.Trim(buffer, "\x00")).String()
 			fmt.Println(resp)
-			buffer = make([]byte, 2048)
+			buffer = make([]byte, 4096)
 		}
 	}
 }
@@ -125,7 +120,6 @@ func (c *Client) writeServer(conn *net.UDPConn, doneChann chan<- error) {
 			msg := model.NewMessage(msgId, c.Username, c.UserId, scanner.Text())
 			bmsg, err := msg.ToBytes()
 			if err != nil {
-				c.Logger.Error(err)
 				doneChann <- err
 			}
 

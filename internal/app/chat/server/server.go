@@ -78,13 +78,16 @@ func (s *Server) serve(ctx context.Context, conn net.PacketConn) (err error) {
 			// Create new User
 			if msgObj.NewClient {
 				s.addClient(msgObj.Username, msgObj.UserId, clientAddr)
+				s.showLastMessages(conn, clientAddr)
 			}
 
 			// Store last message
-			err = s.Message.Store(&msgObj)
-			if err != nil {
-				s.Logger.Error(err)
-				return
+			if !msgObj.NewClient {
+				err = s.Message.Store(&msgObj)
+				if err != nil {
+					s.Logger.Error(err)
+					return
+				}
 			}
 
 			// Return message
@@ -130,5 +133,21 @@ func (s *Server) broadcast(conn net.PacketConn, bmsg []byte) {
 		if err != nil {
 			s.Logger.Error(err)
 		}
+	}
+}
+
+func (s *Server) showLastMessages(conn net.PacketConn, addr net.Addr) {
+	msgs, err := s.Message.Get()
+	if err != nil {
+		fmt.Println(err)
+	}
+	resp := ""
+	for _, msg := range msgs {
+		resp += msg.GetMessageFormated() + "\n"
+	}
+
+	_, err = conn.WriteTo([]byte(resp), addr)
+	if err != nil {
+		fmt.Println(err)
 	}
 }
