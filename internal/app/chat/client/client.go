@@ -58,9 +58,9 @@ func (c *Client) Listen(port string) {
 
 func (c *Client) serve(ctx context.Context, conn *net.UDPConn) (err error) {
 	doneChan := make(chan error, 1)
-	c.registerClient(conn)
+	c.registerClient(conn, doneChan)
 	go c.listenServer(conn)
-	go c.writeServer(conn)
+	go c.writeServer(conn, doneChan)
 
 	select {
 	case <-ctx.Done():
@@ -71,7 +71,7 @@ func (c *Client) serve(ctx context.Context, conn *net.UDPConn) (err error) {
 	return
 }
 
-func (c *Client) registerClient(conn *net.UDPConn) {
+func (c *Client) registerClient(conn *net.UDPConn, doneChann chan<- error) {
 	var register client_model.Register
 	register.NewClient = true
 	register.UserId = uuid.NewString()
@@ -85,13 +85,13 @@ func (c *Client) registerClient(conn *net.UDPConn) {
 	b, err := register.GetBytes()
 	if err != nil {
 		c.Logger.Error(err)
-		log.Fatal(err)
+		doneChann <- err
 	}
 
 	_, err = conn.Write(b)
 	if err != nil {
 		c.Logger.Error(err)
-		log.Fatal(err)
+		doneChann <- err
 	}
 
 	c.Username = register.Username
@@ -116,7 +116,7 @@ func (c *Client) listenServer(conn *net.UDPConn) {
 	}
 }
 
-func (c *Client) writeServer(conn *net.UDPConn) {
+func (c *Client) writeServer(conn *net.UDPConn, doneChann chan<- error) {
 	msgId := 1
 	for {
 		// scanner.Scan locks process until the user types a message
@@ -126,13 +126,14 @@ func (c *Client) writeServer(conn *net.UDPConn) {
 			bmsg, err := msg.ToBytes()
 			if err != nil {
 				c.Logger.Error(err)
-				return
+				doneChann <- err
 			}
 
 			// Send the client input to the server
 			_, err = io.Copy(conn, strings.NewReader(string(bmsg)))
 			if err != nil {
 				c.Logger.Warn(error_messages.FailedToCopyFromReader)
+				doneChann <- err
 			}
 
 			// set a connection deadline
@@ -140,6 +141,7 @@ func (c *Client) writeServer(conn *net.UDPConn) {
 			err = conn.SetReadDeadline(deadline)
 			if err != nil {
 				c.Logger.Warn(error_messages.FailedToSetReaderDeadline)
+				doneChann <- err
 			}
 
 			msgId++
